@@ -8,6 +8,8 @@ from pydantic import BaseModel
 import pandas as pd
 from supabase import create_client, Client
 from groq_chatbot import GroqChatbot
+from pathlib import Path
+import os
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -20,8 +22,9 @@ encoder = None
 chatbot = None
 
 # Supabase client initialization
-SUPABASE_URL = "https://ydhicwwzijljkrmihjcp.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkaGljd3d6aWpsamtybWloamNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NzMwMTEsImV4cCI6MjA1OTI0OTAxMX0.ij_yuhiu_USjh_2wPpLDSewnU4c4alTfjsnGYVq2Wb4"
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 class URLRequest(BaseModel):
@@ -47,14 +50,19 @@ def extract_features(url):
         'hex_chars': int(bool(re.search(r'%[0-9a-f]{2}', url)))
     }
 
+MODEL_PATH = Path(__file__).parent / "phishing_detector.joblib"
+
 @app.on_event("startup")
 async def load_model():
     global model, scaler, encoder, chatbot
-    data = load("api/phishing_detector.joblib")
-    model = data['model']
-    scaler = data['scaler']
-    encoder = data['encoder']
-    chatbot = GroqChatbot()
+    try:
+        data = load(MODEL_PATH)
+        model = data['model']
+        scaler = data['scaler']
+        encoder = data['encoder']
+        chatbot = GroqChatbot()
+    except Exception as e:
+        raise RuntimeError(f"Failed to load model: {str(e)}")
 
 @app.get("/")
 async def read_root(request: Request):

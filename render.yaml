@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: phishing-detector
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 4 -k uvicorn.workers.UvicornWorker api.main:app --bind 0.0.0.0:10000 --timeout 120
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        value: "https://ydhicwwzijljkrmihjcp.supabase.co"
+      - key: SUPABASE_KEY
+        sync: false
+    healthCheckPath: /
+    autoDeploy: true
