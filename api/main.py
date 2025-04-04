@@ -56,13 +56,19 @@ MODEL_PATH = Path(__file__).parent / "phishing_detector.joblib"
 async def load_model():
     global model, scaler, encoder, chatbot
     try:
+        # Load model first before workers fork
         data = load(MODEL_PATH)
         model = data['model']
         scaler = data['scaler']
         encoder = data['encoder']
-        chatbot = GroqChatbot()
+
+        # Initialize chatbot without loading until needed
+        chatbot = GroqChatbot() if os.getenv('ENABLE_CHATBOT') else None
+
+        # Freeze model to reduce memory
+        model.n_jobs = 1  # Disable parallel processing
     except Exception as e:
-        raise RuntimeError(f"Failed to load model: {str(e)}")
+        raise RuntimeError(f"Model loading failed: {str(e)}")
 
 @app.get("/")
 async def read_root(request: Request):
