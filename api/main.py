@@ -56,19 +56,22 @@ MODEL_PATH = Path(__file__).parent / "phishing_detector.joblib"
 async def load_model():
     global model, scaler, encoder, chatbot
     try:
-        # Load model first before workers fork
+        # Load ML model first
         data = load(MODEL_PATH)
         model = data['model']
         scaler = data['scaler']
         encoder = data['encoder']
-
-        # Initialize chatbot without loading until needed
-        chatbot = GroqChatbot() if os.getenv('ENABLE_CHATBOT') else None
-
-        # Freeze model to reduce memory
-        model.n_jobs = 1  # Disable parallel processing
+        
+        # Initialize chatbot client with error handling
+        try:
+            chatbot = GroqChatbot()
+            print("Chatbot initialized successfully")
+        except Exception as e:
+            print(f"Chatbot initialization failed: {str(e)}")
+            chatbot = None
+            
     except Exception as e:
-        raise RuntimeError(f"Model loading failed: {str(e)}")
+        raise RuntimeError(f"Failed to load model: {str(e)}")
 
 @app.get("/")
 async def read_root(request: Request):
@@ -125,6 +128,9 @@ SYSTEM_PROMPT = """You are a cybersecurity assistant specializing in phishing de
     
 @app.post("/chat")
 async def chat_response(chat_request: ChatRequest):
+    if not chatbot:
+        return {"error": "Chat service unavailable"}
+    
     try:
         response = chatbot.client.chat.completions.create(
             messages=[

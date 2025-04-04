@@ -31,6 +31,9 @@ class GroqChatbot:
         """Format message for chat history"""
         return {"role": role, "content": content}
     
+    def is_ready(self):
+        return hasattr(self, 'client') and self.client is not None
+    
     def chat(self, system_prompt=None):
         """
         Start interactive chat session

@@ -136,6 +136,10 @@
                 const data = await response.json();
                 
                 if(data.error) {
+                    if(data.error === "Chat service unavailable") {
+                        alert("Chat feature is currently unavailable. Please try again later.");
+                        return;
+                    }
                     throw new Error(data.error);
                 }
                 
