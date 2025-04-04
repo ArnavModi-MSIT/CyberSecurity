@@ -7,6 +7,7 @@ import re
 from pydantic import BaseModel
 import pandas as pd
 from supabase import create_client, Client
+from groq_chatbot import GroqChatbot
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -16,6 +17,7 @@ templates = Jinja2Templates(directory="templates")
 model = None
 scaler = None
 encoder = None
+chatbot = None
 
 # Supabase client initialization
 SUPABASE_URL = "https://ydhicwwzijljkrmihjcp.supabase.co"
@@ -47,11 +49,12 @@ def extract_features(url):
 
 @app.on_event("startup")
 async def load_model():
-    global model, scaler, encoder
+    global model, scaler, encoder, chatbot
     data = load("api/phishing_detector.joblib")
     model = data['model']
     scaler = data['scaler']
     encoder = data['encoder']
+    chatbot = GroqChatbot()
 
 @app.get("/")
 async def read_root(request: Request):
@@ -97,5 +100,30 @@ async def predict(url_request: URLRequest):
 
         return result
         
+    except Exception as e:
+        return {"error": str(e)}
+
+class ChatRequest(BaseModel):
+    message: str
+
+SYSTEM_PROMPT = """You are a cybersecurity assistant specializing in phishing detection. 
+    Help users analyze and identify potential threats. Be concise and technical when needed.Dont answer any question that is not related to cyber security.Only answer in text format."""
+    
+@app.post("/chat")
+async def chat_response(chat_request: ChatRequest):
+    try:
+        response = chatbot.client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": chat_request.message}
+            ],
+            model=chatbot.model,
+            temperature=0.7,
+            max_tokens=1024
+        )
+        return {
+            "question": chat_request.message,
+            "answer": response.choices[0].message.content
+        }
     except Exception as e:
         return {"error": str(e)}

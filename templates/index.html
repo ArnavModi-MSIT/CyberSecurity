@@ -20,6 +20,51 @@
         <div id="loading" class="hidden">Analyzing...</div>
     </div>
 
+    <div class="container" style="margin-top: 30px;">
+        <h2>Cybersecurity Chat Assistant</h2>
+        <div id="chatContainer">
+            <div id="chatHistory"></div>
+            <form id="chatForm">
+                <input type="text" id="chatInput" placeholder="Ask about cybersecurity..." required>
+                <button type="submit">Send</button>
+            </form>
+        </div>
+    </div>
+
+    <style>
+        #chatContainer {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        #chatHistory {
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .message {
+            margin: 10px 0;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 80%;
+        }
+        
+        .user-message {
+            background: #e3f2fd;
+            margin-left: auto;
+        }
+        
+        .bot-message {
+            background: #f1f0f0;
+            margin-right: auto;
+        }
+    </style>
+
     <script>
         document.getElementById('detectForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -63,6 +108,49 @@
                 alert(`Error: ${error.message}`);
             } finally {
                 loadingDiv.classList.add('hidden');
+            }
+        });
+
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const message = input.value;
+            input.value = '';
+            
+            const chatHistory = document.getElementById('chatHistory');
+            
+            // Add user message
+            chatHistory.innerHTML += `
+                <div class="message user-message">
+                    <strong>You:</strong> ${message}
+                </div>
+            `;
+            
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ message })
+                });
+                
+                const data = await response.json();
+                
+                if(data.error) {
+                    throw new Error(data.error);
+                }
+                
+                // Add bot response
+                chatHistory.innerHTML += `
+                    <div class="message bot-message">
+                        <strong>Assistant:</strong> ${data.answer}
+                    </div>
+                `;
+                
+                // Scroll to bottom
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                
+            } catch(error) {
+                alert(`Error: ${error.message}`);
             }
         });
     </script>
