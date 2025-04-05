@@ -76,6 +76,10 @@ async def load_model():
 async def read_root():
     return {"message": "ML Service API"}
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
 @app.post("/predict")
 async def predict(url_request: URLRequest):
     try:
