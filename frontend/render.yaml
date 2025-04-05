@@ -1,15 +1,21 @@
 root: [frontend]
 services:
   - type: web
-    name: phishing-detector
+    name: phishing-detector-frontend
     runtime: python
     root: frontend  # Critical for mono-repo setup
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 1 --threads 2 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:$PORT --timeout 180 --preload
+    buildCommand: |
+      pip install -r requirements.txt
+    startCommand: |
+      gunicorn -k uvicorn.workers.UvicornWorker \
+      --workers 2 \
+      --timeout 120 \
+      --bind 0.0.0.0:$PORT \
+      app:app
     envVars:
+      - key: ML_SERVICE_URL
+        value: https://your-ml-service-name.onrender.com  # Update this
       - key: GROQ_API_KEY
-        sync: false
-      - key: ML_SERVICE_URL   # Set this to your ML service URL after deployment
         sync: false
     plan: free
     healthCheckPath: /

@@ -13,7 +13,7 @@ templates = Jinja2Templates(directory="templates")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["*"],  # Or your frontend URL
     allow_methods=["*"],
     allow_headers=["*"],
 )
