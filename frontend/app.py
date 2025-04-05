@@ -5,10 +5,18 @@ from pydantic import BaseModel
 import httpx
 import os
 from groq_chatbot import GroqChatbot
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Initialize chatbot
 chatbot = None

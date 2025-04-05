@@ -1,7 +1,9 @@
+root: [frontend]
 services:
   - type: web
     name: phishing-detector
     runtime: python
+    root: frontend  # Critical for mono-repo setup
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -w 1 --threads 2 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:$PORT --timeout 180 --preload
     envVars:
