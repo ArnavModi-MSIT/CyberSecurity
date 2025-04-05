@@ -5,7 +5,7 @@ services:
     runtime: python
     root: url  # Critical for mono-repo setup
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn -w 1 --threads 2 -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:$PORT --timeout 180 --preload
+    startCommand: startCommand: gunicorn -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: SUPABASE_URL
         sync: false
