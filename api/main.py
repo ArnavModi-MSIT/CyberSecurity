@@ -147,3 +147,21 @@ async def chat_response(chat_request: ChatRequest):
         }
     except Exception as e:
         return {"error": str(e)}
+
+class FeedbackRequest(BaseModel):
+    url: str
+    type: str
+
+@app.post("/feedback")
+async def submit_feedback(feedback: FeedbackRequest):
+    try:
+        # Insert or update the URL in Supabase
+        response = supabase.table("urls").upsert({
+            "url": feedback.url,
+            "type": feedback.type
+        }).execute()
+        
+        return {"status": "success", "message": "Feedback recorded"}
+        
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

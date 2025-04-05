@@ -120,3 +120,71 @@ button:hover {
     margin-right: 20%;
     border-radius: 15px 15px 15px 0;
 }
+
+.feedback-buttons button {
+    padding: 8px 15px;
+    font-size: 14px;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.feedback-buttons button:disabled {
+    background-color: #6c757d !important;
+    cursor: not-allowed;
+}
+
+#chatContainer {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+#chatHistory {
+    height: 300px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.message {
+    margin: 10px 0;
+    padding: 8px 12px;
+    border-radius: 15px;
+    max-width: 80%;
+}
+
+.user-message {
+    background: #e3f2fd;
+    margin-left: auto;
+}
+
+.bot-message {
+    background: #f1f0f0;
+    margin-right: auto;
+}
+
+.feedback-buttons {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.feedback-good {
+    background: #28a745 !important;
+}
+
+.feedback-bad {
+    background: #dc3545 !important;
+}
+
+.feedback-good:hover {
+    background: #218838 !important;
+}
+
+.feedback-bad:hover {
+    background: #c82333 !important;
+}

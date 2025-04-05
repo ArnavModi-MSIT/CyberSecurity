@@ -16,6 +16,10 @@
             <p>URL: <span id="resultUrl"></span></p>
             <p>Status: <span id="resultStatus"></span> <small>(Source: <span id="resultSource"></span>)</small></p>
             <p>Confidence: <span id="resultConfidence"></span></p>
+            <div class="feedback-buttons">
+                <button class="feedback-good" onclick="submitFeedback('good')">Mark as Good</button>
+                <button class="feedback-bad" onclick="submitFeedback('bad')">Mark as Bad</button>
+            </div>
         </div>
         <div id="loading" class="hidden">Analyzing...</div>
     </div>
@@ -31,132 +35,6 @@
         </div>
     </div>
 
-    <style>
-        #chatContainer {
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 15px;
-        }
-        
-        #chatHistory {
-            height: 300px;
-            overflow-y: auto;
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-        }
-        
-        .message {
-            margin: 10px 0;
-            padding: 8px 12px;
-            border-radius: 15px;
-            max-width: 80%;
-        }
-        
-        .user-message {
-            background: #e3f2fd;
-            margin-left: auto;
-        }
-        
-        .bot-message {
-            background: #f1f0f0;
-            margin-right: auto;
-        }
-    </style>
-
-    <script>
-        document.getElementById('detectForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const url = document.getElementById('urlInput').value;
-            const resultDiv = document.getElementById('result');
-            const loadingDiv = document.getElementById('loading');
-            
-            loadingDiv.classList.remove('hidden');
-            resultDiv.classList.add('hidden');
-
-            try {
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ url })
-                });
-
-                const data = await response.json();
-                
-                if (data.error) {
-                    alert(`Error: ${data.error}`);
-                    return;
-                }
-
-                document.getElementById('resultUrl').textContent = data.url;
-                document.getElementById('resultStatus').textContent = data.prediction;
-                document.getElementById('resultStatus').className = data.prediction;
-                document.getElementById('resultSource').textContent = data.source;
-
-                if (data.source === 'database') {
-                    document.getElementById('resultConfidence').textContent = "Verified entry";
-                } else {
-                    document.getElementById('resultConfidence').textContent = 
-                        `${Math.round(data.confidence * 100)}%`;
-                }
-
-                resultDiv.classList.remove('hidden');
-            } catch (error) {
-                alert(`Error: ${error.message}`);
-            } finally {
-                loadingDiv.classList.add('hidden');
-            }
-        });
-
-        document.getElementById('chatForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const input = document.getElementById('chatInput');
-            const message = input.value;
-            input.value = '';
-            
-            const chatHistory = document.getElementById('chatHistory');
-            
-            // Add user message
-            chatHistory.innerHTML += `
-                <div class="message user-message">
-                    <strong>You:</strong> ${message}
-                </div>
-            `;
-            
-            try {
-                const response = await fetch('/chat', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ message })
-                });
-                
-                const data = await response.json();
-                
-                if(data.error) {
-                    if(data.error === "Chat service unavailable") {
-                        alert("Chat feature is currently unavailable. Please try again later.");
-                        return;
-                    }
-                    throw new Error(data.error);
-                }
-                
-                // Add bot response
-                chatHistory.innerHTML += `
-                    <div class="message bot-message">
-                        <strong>Assistant:</strong> ${data.answer}
-                    </div>
-                `;
-                
-                // Scroll to bottom
-                chatHistory.scrollTop = chatHistory.scrollHeight;
-                
-            } catch(error) {
-                alert(`Error: ${error.message}`);
-            }
-        });
-    </script>
+    <script src="/static/script.js"></script>
 </body>
 </html>
