@@ -14,7 +14,7 @@ services:
       app:app
     envVars:
       - key: ML_SERVICE_URL
-        value: https://your-ml-service-name.onrender.com  # Update this
+        value: https://ml-service.onrender.com  # Update this with the deployed URL service
       - key: GROQ_API_KEY
         sync: false
     plan: free

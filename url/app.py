@@ -62,15 +62,18 @@ MODEL_PATH = Path(__file__).parent / "phishing_detector.joblib"
 
 @app.on_event("startup")
 async def load_model():
-    global model, scaler, encoder
+    global model, scaler, encoder, supabase
     try:
         # Load ML model
         data = load(MODEL_PATH)
         model = data['model']
         scaler = data['scaler']
         encoder = data['encoder']
+        print(f"Supabase Connected: {supabase is not None}")
+        print(f"Supabase URL: {SUPABASE_URL[:15]}...")  # Log partial URL
     except Exception as e:
         raise RuntimeError(f"Failed to load model: {str(e)}")
+        print(f"Supabase Init Error: {str(e)}")
 
 @app.get("/")
 async def read_root():
@@ -84,7 +87,14 @@ async def health_check():
 async def predict(url_request: URLRequest):
     try:
         # Check database first
-        existing = supabase.table("urls").select("type").eq("url", url_request.url).execute()
+        existing = supabase.table("urls")\
+            .select("type")\
+            .eq("url", url_request.url)\
+            .execute()
+        
+        # Add error logging
+        print(f"Supabase response: {existing}")
+        
         if existing.data:
             return {
                 "url": url_request.url,
@@ -132,5 +142,13 @@ async def submit_feedback(feedback: FeedbackRequest):
         
         return {"status": "success", "message": "Feedback recorded"}
         
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@app.get("/test-supabase")
+async def test_db():
+    try:
+        test = supabase.table("urls").select("count").execute()
+        return {"status": "connected", "data": test.data}
     except Exception as e:
         return {"status": "error", "message": str(e)}

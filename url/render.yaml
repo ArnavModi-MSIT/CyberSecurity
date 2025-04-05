@@ -5,12 +5,12 @@ services:
     runtime: python
     root: url  # Critical for mono-repo setup
     buildCommand: pip install -r requirements.txt
-    startCommand: startCommand: gunicorn -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:$PORT
+    startCommand: gunicorn -k uvicorn.workers.UvicornWorker app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: SUPABASE_URL
-        sync: false
+        value: https://ydhicwwzijljkrmihjcp.supabase.co
       - key: SUPABASE_KEY
-        sync: false
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlkaGljd3d6aWpsamtybWloamNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDM2NzMwMTEsImV4cCI6MjA1OTI0OTAxMX0.ij_yuhiu_USjh_2wPpLDSewnU4c4alTfjsnGYVq2Wb4
     plan: standard-1x
     healthCheckPath: /health
     autoDeploy: true
