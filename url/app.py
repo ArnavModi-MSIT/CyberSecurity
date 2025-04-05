@@ -1,25 +1,29 @@
-from fastapi import FastAPI, Request, Form, Depends
-from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
+from fastapi import FastAPI
 from joblib import load
 import numpy as np
 import re
 from pydantic import BaseModel
 import pandas as pd
 from supabase import create_client, Client
-from groq_chatbot import GroqChatbot
 from pathlib import Path
 import os
+from fastapi.middleware.cors import CORSMiddleware  # <-- Add this
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Load model
 model = None
 scaler = None
 encoder = None
-chatbot = None
 
 # Supabase client initialization
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -29,6 +33,10 @@ supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 class URLRequest(BaseModel):
     url: str
+
+class FeedbackRequest(BaseModel):
+    url: str
+    type: str
 
 def extract_features(url):
     url = str(url).lower()
@@ -54,28 +62,19 @@ MODEL_PATH = Path(__file__).parent / "phishing_detector.joblib"
 
 @app.on_event("startup")
 async def load_model():
-    global model, scaler, encoder, chatbot
+    global model, scaler, encoder
     try:
-        # Load ML model first
+        # Load ML model
         data = load(MODEL_PATH)
         model = data['model']
         scaler = data['scaler']
         encoder = data['encoder']
-        
-        # Initialize chatbot client with error handling
-        try:
-            chatbot = GroqChatbot()
-            print("Chatbot initialized successfully")
-        except Exception as e:
-            print(f"Chatbot initialization failed: {str(e)}")
-            chatbot = None
-            
     except Exception as e:
         raise RuntimeError(f"Failed to load model: {str(e)}")
 
 @app.get("/")
-async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
+async def read_root():
+    return {"message": "ML Service API"}
 
 @app.post("/predict")
 async def predict(url_request: URLRequest):
@@ -98,7 +97,7 @@ async def predict(url_request: URLRequest):
         # Transform features - Use only the features that were part of the training
         cat_features = encoder.transform(features_df[['has_http', 'has_www']])
         num_features = scaler.transform(features_df[['url_length', 'dots_count', 'digits_count', 
-                                                     'special_chars_count', 'path_depth', 'avg_token_length']])
+                                                    'special_chars_count', 'path_depth', 'avg_token_length']])
         
         # Combine features
         X = np.hstack([num_features, cat_features])
@@ -113,44 +112,10 @@ async def predict(url_request: URLRequest):
             "confidence": float(max(proba))
         }
 
-        # No database insertion
-
         return result
         
     except Exception as e:
         return {"error": str(e)}
-
-class ChatRequest(BaseModel):
-    message: str
-
-SYSTEM_PROMPT = """You are a cybersecurity assistant specializing in phishing detection. 
-    Help users analyze and identify potential threats. Be concise and technical when needed.Dont answer any question that is not related to cyber security.Only answer in text format."""
-    
-@app.post("/chat")
-async def chat_response(chat_request: ChatRequest):
-    if not chatbot:
-        return {"error": "Chat service unavailable"}
-    
-    try:
-        response = chatbot.client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": chat_request.message}
-            ],
-            model=chatbot.model,
-            temperature=0.7,
-            max_tokens=1024
-        )
-        return {
-            "question": chat_request.message,
-            "answer": response.choices[0].message.content
-        }
-    except Exception as e:
-        return {"error": str(e)}
-
-class FeedbackRequest(BaseModel):
-    url: str
-    type: str
 
 @app.post("/feedback")
 async def submit_feedback(feedback: FeedbackRequest):

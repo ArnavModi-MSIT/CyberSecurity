@@ -1,14 +1,14 @@
 services:
   - type: web
-    name: phishing-detector
+    name: ml-service
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn -w 1 --threads 2 -k uvicorn.workers.UvicornWorker api.main:app --bind 0.0.0.0:$PORT --timeout 180 --preload
     envVars:
-      - key: GROQ_API_KEY
+      - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_KEY
         sync: false
-    plan: standard-1x # Minimum required for ML models
+    plan: standard-1x
     healthCheckPath: /health
     autoDeploy: true
